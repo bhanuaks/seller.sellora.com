@@ -1,0 +1,33 @@
+.input-error-tip {
+    position: relative;
+    background-color: #ff5f1f;
+    color: #fff !important;
+    display: none;
+    max-width: 90%;
+    text-wrap: wrap;
+    margin-right: 20px;
+    padding: 2px 10px 2px 10px;
+    z-index: 910;
+    margin-top: 4px;
+    margin-left: 4px;
+    border-radius: 10px; 
+    font-size: 12px;
+}
+
+.input-error-tip:before {
+    position: absolute;
+    content: "";
+    width: 0;
+    height: 0;
+    border: 6px solid transparent;
+    border-bottom-color: #ff5f1f;
+    top: -12px;
+    z-index: 915;
+}
+
+span.mandatory_field {
+    font-size: 10px;
+    margin-left: 1px;
+    padding: 0;
+    color: red;
+}
