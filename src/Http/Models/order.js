@@ -108,6 +108,12 @@ const orderProductSchema = new Schema({
         type:Object,
         default:null
     },
+    sku:{
+        type:String, 
+    },
+    sin:{
+        type:String, 
+    },
     variant_id:{
         type:mongoose.Types.ObjectId,
         ref:"ProductVariant", 
@@ -133,8 +139,8 @@ const orderProductSchema = new Schema({
     order_status:{
         type:Number,
         default:0,
-         enum:[0,1,2,3,4,5,6] 
-         //0=>Pending, 1=> confirmed, 2=>shipped, 3=> out of delivery, 4=> Deliverd, 5=> Canceled, 6=>Refund
+         enum:[0,1,2,3,4,5,6,7] 
+         //0=>Pending, 1=> confirmed, 2=>shipped, 3=> out of delivery, 4=> Deliverd, 5=> Canceled, 6=>Refund, 7=> Cancel Request,
     },
     image:String,
  
@@ -144,6 +150,28 @@ const orderProductSchema = new Schema({
 export const orderProductModel = mongoose.models.OrderProduct || mongoose.model("OrderProduct", orderProductSchema)
 
  
+
+const orderItemStatusHistrySchema = new Schema({
+    orderItemId:{
+        type:mongoose.Types.ObjectId,
+        ref:"OrderProduct"
+    },
+    status:Number, //0=>Pending, 1=> confirmed, 2=>shipped, 3=> out of delivery, 4=> Deliverd, 5=> Canceled, 6=>Refund, 7=> Cancel Request,
+    remarks:String,
+    trakingDetails:Array,
+
+    // this field 
+    excluding:Number,
+    Including:Number,
+    refund_amount:Number,
+    refund_full_amount:String,
+
+},{timestamps:true})
+
+
+export const orderItemStatusHistryModal = mongoose.models.OrderItemStatusHistry || mongoose.model('OrderItemStatusHistry', orderItemStatusHistrySchema);
+
+
 
 const orderIdSchema = new Schema({
     id:Number,

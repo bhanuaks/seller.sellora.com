@@ -19,3 +19,21 @@ export function getLoginUser() {
         return null; // Return `null` instead of an error message
     }
 }
+
+export function getLoginSeller() {  
+    try {
+        const cookieStore = cookies();
+        const userToken = cookieStore.get("sellerAuthToken")?.value;
+
+        if (!userToken) {
+            return null; // Return `null` if no token is found
+        }
+
+        // Verify JWT token safely
+        const decodedData = jwt.verify(userToken, process.env.JWT_SECRET);
+        return decodedData.seller; 
+    } catch (error) {
+        console.error("Error decoding JWT:", error);
+        return null; // Return `null` instead of an error message
+    }
+}

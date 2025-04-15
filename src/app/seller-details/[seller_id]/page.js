@@ -70,10 +70,10 @@ const page = ({params}) => {
             <div className="breadcumb-wrap_asd">
               <ul>
                 <li>
-                  <a href="profile.html">Business Overview</a>
+                  <a href="#">Business Overview</a>
                 </li>
                 <li>
-                  <a href="what_our_customers_say.html">
+                  <a href="#what_our_customers_say.html">
                     What Our Customers Say
                   </a>
                 </li>

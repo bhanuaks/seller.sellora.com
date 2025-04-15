@@ -35,6 +35,9 @@ const productSchema = new Schema({
     slug:{
         type:String
     },
+    product_id:{
+        type:String
+    },
     product_id_type:String,
     product_description:String,
     key_feature:[{
@@ -42,7 +45,7 @@ const productSchema = new Schema({
     }],
     search_keywords:String,
     target_gender:String,
-    age_range:Number,
+    age_range:String,
     material:String,
     model_name:String,
     model_number:String,
@@ -52,6 +55,7 @@ const productSchema = new Schema({
     manufacturer_details:String,
     packer_details:String,
     importer_details:String,
+
     image_1:{
         type:String,
         default:null
@@ -65,6 +69,18 @@ const productSchema = new Schema({
         default:null
     }, 
     image_4:{
+        type:String,
+        default:null
+    }, 
+    image_5:{
+        type:String,
+        default:null
+    }, 
+    image_6:{
+        type:String,
+        default:null
+    }, 
+    image_7:{
         type:String,
         default:null
     }, 
@@ -91,12 +107,10 @@ const productSchema = new Schema({
         default:"USD"
     },
     taxCode: {
-        type:String,
-        default:null,
+        type:String, 
     },
     taxRate:{
-        type:Number,
-        default:'',
+        type:Number, 
     },
     fulfillmentBy:{
         type:String,
@@ -111,10 +125,39 @@ const productSchema = new Schema({
         default:"Yes"
     },
 
-    packageWeight:String,
-    packageBreadth:String,
+    save_as_draft: {
+        type:String,
+        enum:["1","0"],
+        default:"1" // 1=>save as draft, 0 => submit successfully
+    }, 
+    packageBreadth:String,  
+    product_length:String,
+    product_length_unit : String,
+    product_width:String,
+    product_width_unit :String,
+    product_weight:String,
+    product_weight_unit : String,
+    packageLength:String,
+    packageLengthUnit:String,
+    packageWidth:String,
+    packageWidthUnit:String,
     packageHeight:String,
-    packageLength:String
+    packageHeightUnit:String,
+    color:String,
+    size:String,
+    style:String,
+    pettern:String,
+    unit_coun:String,
+    unit_count_type:String,
+    item_type_name:String,
+    recommanded_use:String,
+    packageWeight:String,
+    packageWeightUnit:String,
+
+    productHeight:String,
+    productHeightUnit:String,
+    numberOfItem:String, 
+     
 
 },{timestamps:true})
 
@@ -128,19 +171,21 @@ const productOtherDetailsSchema = new Schema({
         type:mongoose.Types.ObjectId,
         ref:"Product"
     },
-    fit_type:String,
-    outer_material:String,
-    fabric_type:String,
-    fabric_description:String,
-    features:String,
-    instruction_of_use:String,
-    fabric_regulations:String,
-    pattern:String,
-    dangerous_goods_regulations:String,
-    safety_warning:String,
-    has_written_warranty:String,
-    contains_an_electronic_component:String, 
-    product_is_or_contains_this_battery_type:String
+    containsLiquidContents:String,
+    liquidVolume:String,
+    liquidVolumeUnit:String,
+    isTheItemHeaSensitive:String,
+    isTheItemHeaSensitiveInstructions:String,
+    isTheLiquidProductDoubleSealed:String, 
+    isTheLiquidProductDoubleSealedInstructions:String,
+    dangerousGoodsRegulations:String,
+    safetyWarning:String,
+    hasWrittenWarranty:String,
+    ProductIsOrContainsAnElectronicComponent:String,
+    productIsOrContainsThisBatteryType:String, 
+    areBatteriesIncluded:String,
+    batteryCellComposition:String
+
 },{timestamps:true})
 
 
@@ -160,9 +205,17 @@ const productVariantSchema = new Schema({
         type:String,
         required:[true, "sku is required"]
     },
+    sin:{
+        type:String, 
+    },
     listingStatus:{
         type:Number,
-        enum:[0, 1, 2,3,4] // 0=>Deactive, 1=>Active, 2=> Draft, 3=>Archive, 4=>Delete
+        enum:[0, 1, 2, 3, 4] // 0=>Deactive, 1=>Active, 2=> Draft, 3=>Archive, 4=>Delete
+    },
+    isProcessing:{
+        type:String,
+         enum:["Processing","Approved"],
+         default:"Processing" 
     },
     msrp:Number,
     consumerSalePrice:Number,
@@ -177,8 +230,7 @@ const productVariantSchema = new Schema({
         default:0
     },
     customAttributes:{
-        type:Object,
-        required:[true, "customAttributes required"]
+        type:Object, 
     },
     discount_type:{
         type:String,
@@ -201,10 +253,29 @@ const productVariantSchema = new Schema({
         type:String,
         default:null,
     }, 
+    image_5:{
+        type:String,
+        default:null,
+    }, 
+    image_6:{
+        type:String,
+        default:null,
+    }, 
+    image_7:{
+        type:String,
+        default:null,
+    }, 
     stock_status:{
         type:String,
         default:"In Stock",
-    }
+    },
+
+    manual_product_id:String,
+    manual_product_id_type:String,
+    conditionType:String,
+    expireDate:String
+
+
 },{timestamps:true})
 
 export const productVariantModel = mongoose.models.ProductVariant || mongoose.model("ProductVariant", productVariantSchema)

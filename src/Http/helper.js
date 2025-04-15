@@ -18,6 +18,10 @@ export function encryptText(text) {
   };
 }
 
+
+export const fetcher = (url) => fetch(url).then((res) => res.json());
+
+
 export function decryptText(encrypted) {
  
   const decipher = crypto.createDecipheriv(
@@ -32,7 +36,8 @@ export function decryptText(encrypted) {
   return decrypted.toString();  
 }
 
-export const baseUrl = "http://localhost:3000/"
+export const baseUrl = process.env.BASE_URL || "http://localhost:3000/";
+export const websiteUrl = process.env.SELLORA_WEB_URL ||  "https://aksmedia.in/"; 
 
 // product image Path
 export const main_thumb_img_path = "uploads/product/main_image/thumb/"
@@ -55,6 +60,18 @@ export const product_thumb_img_path4 = "uploads/product/img4/thumb/"
 export const product_medium_img_path4 = "uploads/product/img4/medium/"
 export const product_large_img_path4 = "uploads/product/img4/large/"
 
+export const product_thumb_img_path5 = "uploads/product/img5/thumb/"
+export const product_medium_img_path5 = "uploads/product/img5/medium/"
+export const product_large_img_path5 = "uploads/product/img5/large/"
+
+export const product_thumb_img_path6 = "uploads/product/img6/thumb/"
+export const product_medium_img_path6 = "uploads/product/img6/medium/"
+export const product_large_img_path6 = "uploads/product/img6/large/"
+
+export const product_thumb_img_path7 = "uploads/product/img7/thumb/"
+export const product_medium_img_path7 = "uploads/product/img7/medium/"
+export const product_large_img_path7 = "uploads/product/img7/large/"
+
 //  variant image path 
 export const variant_thumb_img_path1 = "uploads/variant/img1/thumb/"
 export const variant_medium_img_path1 = "uploads/variant/img1/medium/"
@@ -72,6 +89,18 @@ export const variant_thumb_img_path4 = "uploads/variant/img4/thumb/"
 export const variant_medium_img_path4 = "uploads/variant/img4/medium/"
 export const variant_large_img_path4 = "uploads/variant/img4/large/"
 
+export const variant_thumb_img_path5 = "uploads/variant/img5/thumb/"
+export const variant_medium_img_path5 = "uploads/variant/img5/medium/"
+export const variant_large_img_path5 = "uploads/variant/img5/large/"
+
+export const variant_thumb_img_path6 = "uploads/variant/img6/thumb/"
+export const variant_medium_img_path6 = "uploads/variant/img6/medium/"
+export const variant_large_img_path6 = "uploads/variant/img6/large/"
+
+export const variant_thumb_img_path7 = "uploads/variant/img7/thumb/"
+export const variant_medium_img_path7 = "uploads/variant/img7/medium/"
+export const variant_large_img_path7 = "uploads/variant/img7/large/"
+
 
 
 export const isEmpty = (value) => !value || value.trim() === '';
@@ -84,6 +113,10 @@ export const isEmpty = (value) => !value || value.trim() === '';
 //     const isValid = /^[0-9]{10}$/.test(mobile);
 //     return isValid;
 //   }
+
+export function getPricingLabel(price) {
+  return price.toLocaleString("en-US", { style: "currency", currency: "USD" });
+}
 
 
   export function sendSMSFunction(templeteId, message){
@@ -334,3 +367,20 @@ export function showNotification(message){
 
  
 
+export function getBasePrice(amountIncludingGST, tax){
+ 
+
+const basePrice = amountIncludingGST / (1 + tax / 100);
+return basePrice
+}
+
+export function discountPrice(priceAmount, discount, discountType="percentage"){
+
+  if(discountType == "percentage"){
+    const discountAmount = (priceAmount/100) *discount;
+    return (priceAmount - discountAmount)
+  }else{
+    return (priceAmount - discount) 
+  }
+
+}

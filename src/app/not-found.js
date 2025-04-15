@@ -4,10 +4,10 @@ import React from 'react'
 
 const Page = () => {
     const currentPath = usePathname()
-    if(currentPath.startsWith('/sellor/al')){ 
+    if(currentPath.startsWith('/seller/al')){ 
         return (
             <>
-            {currentPath.startsWith('/sellor/al') && (
+            {currentPath.startsWith('/seller/al') && (
                         <html> 
                             <body> 
                                 <div className="flex flex-col items-center justify-center h-screen">

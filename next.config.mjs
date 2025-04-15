@@ -4,7 +4,7 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['localhost','aksmedia.in'], // Allow images from localhost
+    domains: ['localhost','aksmedia.in','seller.aksmedia.in'], // Allow images from localhost
   },
   // output: 'export',
   webpack(config, { buildId, dev, isServer, defaultLoaders, webpack }) {

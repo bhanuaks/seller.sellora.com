@@ -17,16 +17,16 @@ export function middleware(request){
     const isAdminLogin = adminAuth && adminAuth.name == "adminAuthToken";
     const isUserLogin = userAuth && userAuth.name == "userAuthToken";
     
-     const accesWithoutLoginPage = ['/sellor/sell-online', '/sellor/fees-n-commission', '/sellor/grow', '/sellor/learn', '/sellor/login', '/sellor/register', '/sellor/login-otp']
-    if(requestUrl.pathname.startsWith('/sellor') && !accesWithoutLoginPage.includes(requestUrl.pathname)){
+     const accesWithoutLoginPage = ['/seller/sell-online', '/seller/fees-n-commission', '/seller/grow', '/seller/learn', '/seller/login', '/seller/register', '/seller/login-otp']
+    if((requestUrl.pathname.startsWith('/seller')  && !accesWithoutLoginPage.includes(requestUrl.pathname)) || requestUrl.pathname.startsWith('/dashboard')){
          
         if(!isSellerLogin){
-            const redirectUrl = new URL('/sellor/login', request.url)
+            const redirectUrl = new URL('/seller/login', request.url)
             return NextResponse.redirect(redirectUrl)
         }
-    }else if(requestUrl.pathname.startsWith('/sellor/login') || requestUrl.pathname.startsWith('/sellor/register')){
+    }else if(requestUrl.pathname.startsWith('/seller/login') || requestUrl.pathname.startsWith('/seller/register')){
         if(isSellerLogin){
-            const redirectUrl = new URL('/sellor/al/contact-details', request.url)
+            const redirectUrl = new URL('/dashboard', request.url)
             return NextResponse.redirect(redirectUrl)
         }
     }else if(requestUrl.pathname.startsWith('/admin')) {
@@ -72,7 +72,7 @@ export function middleware(request){
     }
 
      //  authentication Seller API
-    if(requestUrl.pathname.startsWith('/api/sellor')){ 
+    if(requestUrl.pathname.startsWith('/api/seller')){ 
         if(!isSellerLogin){
             return NextResponse.json({status:false, message:"Unauthorized User"},403)
         }

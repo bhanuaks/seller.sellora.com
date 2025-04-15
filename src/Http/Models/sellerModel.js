@@ -59,6 +59,12 @@ const sellerSchema = new Schema({
         enum: ['Pending', 'Approved', 'Rejected'],
         default: 'Pending',
     },
+    selfActive:{
+        type:String,
+        trim:true,
+        enum: ['Pending', 'Active', 'Deactive'],
+        default: 'Pending',
+    },
     approvalDate:{
         type : Date,
         trim : true
@@ -312,3 +318,25 @@ const seller_card_information_schema = new Schema({
 export const sellorCardInformationModel = mongoose.models.SellorCardInformation ||  mongoose.model("SellorCardInformation", seller_card_information_schema)
  
 
+
+
+
+const sellerBusinessDetails = new Schema({
+    seller_id:{
+        type:mongoose.Types.ObjectId,
+        ref:"Seller"
+    }, 
+    banner:{
+        type:String, 
+    },
+    business_overview:{
+        type:String, 
+    },
+    business_profile:{
+        type:String,  
+    }, 
+
+},{timestamps:true}) 
+
+export const sellerBusinessProfileModel = mongoose.models.SellerBusinessProfile ||  mongoose.model("SellerBusinessProfile", sellerBusinessDetails)
+ 

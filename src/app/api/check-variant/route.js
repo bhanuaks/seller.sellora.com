@@ -1,7 +1,7 @@
 import { getVariantAttribute, responseFun } from "@/Http/helper";
 import { productVariantModel, variantThresholdSchemaModal } from "@/Http/Models/productModel";
 import mongoose from "mongoose";
-import { fetchVariant } from "../sellor/product/add-variant/route";
+import { fetchVariant } from "../seller/product/add-variant/route";
 
 
 // export  async function GET(request) {

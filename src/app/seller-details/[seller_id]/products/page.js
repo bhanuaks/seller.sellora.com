@@ -367,10 +367,8 @@ const page = ({ params }) => {
                                 </div>
                                 <div className="col-lg-20 col-lg-3 col-md-6 col-sm-6 col-12">
                                     <div className="store_poroduct_outer deals-of-day">
-                                        <div className="store_product_outer_image_area">
-    
-                                            <a href="product-details.html">
-    
+                                        <div className="store_product_outer_image_area"> 
+                                            <a href="product-details.html"> 
                                                 <img src={`${baseUrl}front/assets/images/p4.jpg`} />
                                             </a>
                                             <div className="action-share-option">
