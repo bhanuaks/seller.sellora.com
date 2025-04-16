@@ -3,17 +3,9 @@ import { baseUrl } from '@/Http/helper'
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
 
-const ListingFilter = ({seller}) => {
+const ListingFilter = ({seller, resetFilter, submitFilter, filterData, setFilterData}) => {
 
-   const [filterData, setFilterData] = useState({
-      category:"",
-      brand:"",
-      condition:"",
-      listing_quantity:"",
-      min_price:0,
-      max_price:"",
-      variants:""
-    })
+   
 
     
     const [categoryList , setCategoryList] = useState([])
@@ -36,7 +28,30 @@ const ListingFilter = ({seller}) => {
 
 
     function updatefilterData(e){
-      const { name, value } = e.target
+      const { name, value, checked } = e.target
+
+        console.log({filterData});
+      if (name === "brand") {
+        setFilterData((prevData) => {
+          const brandList = prevData.brand || [];
+      
+          if (checked) {
+            return {
+              ...prevData,
+              brand: [...brandList, value],
+            };
+          } else {
+            return {
+              ...prevData,
+              brand: brandList.filter((item) => item !== value),
+            };
+          }
+        });
+
+        return
+      }
+
+ 
       setFilterData((preData)=>({
         ...preData,
         [name]:value
@@ -118,7 +133,7 @@ const ListingFilter = ({seller}) => {
                              id={`category_${index}`} 
                              value={categoryItem._id}
                              onChange={(e)=>updatefilterData(e)}
-                             checked = {filterData.brand==categoryItem._id?true:false}
+                             checked = {filterData.category==categoryItem._id?true:false}
                              />
                              {categoryItem.name}
                            </label>
@@ -132,7 +147,7 @@ const ListingFilter = ({seller}) => {
                              id={`category_${index}`} 
                              value={categoryItem._id}
                              onChange={(e)=>updatefilterData(e)}
-                             checked = {filterData.brand==categoryItem._id?true:false}
+                             checked = {filterData.category==categoryItem._id?true:false}
                              />
                              {categoryItem.name}
                            </label>
@@ -165,12 +180,12 @@ const ListingFilter = ({seller}) => {
                       {brandList.length > 0 ? brandList.map((brand, index)=>(
                            <li key={index}>
                            <label htmlFor={`barand_${index}`}>
-                             <input type="radio" name="brand"  id={`barand_${index}`} 
+                             <input type="checkbox" name="brand"  id={`barand_${index}`} 
                               value={brand._id}
                               onChange={(e)=>updatefilterData(e)}
-                              checked = {filterData.brand==brand._id?true:false}
+                              checked = {filterData.brand.includes(brand._id)?true:false}
                               />
-                             {brand.name}
+                             &nbsp;{brand.name}
                            </label>
                          </li>
                       )):null}
@@ -187,15 +202,14 @@ const ListingFilter = ({seller}) => {
                     </li> */}
                   </ul>
                 </div>
-                <div className="dropdown demo_drop">
+                {/* <div className="dropdown demo_drop">
                   <button
                     className="btn dropdown-toggle menu_button"
                     type="button"
                     id="dropdownMenuButton1"
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
-                  >
-                    
+                  > 
                     Condition
                   </button>
                   <ul
@@ -208,8 +222,8 @@ const ListingFilter = ({seller}) => {
                       </Link>
                     </li>
                   </ul>
-                </div>
-                <div className="dropdown demo_drop">
+                </div> */}
+                {/* <div className="dropdown demo_drop">
                   <button
                     className="btn dropdown-toggle menu_button"
                     type="button"
@@ -253,7 +267,7 @@ const ListingFilter = ({seller}) => {
                       </ul>
                     </div>
                   </ul>
-                </div>
+                </div> */}
                 <div className="dropdown demo_drop">
                   <button
                     className="btn dropdown-toggle menu_button"
@@ -270,10 +284,18 @@ const ListingFilter = ({seller}) => {
                     aria-labelledby="dropdownMenuButton1"
                   >
                     <li>
-                      <input type="text" placeholder="$ Min" />
+                      <input type="text" placeholder="$ Min" 
+                        onChange={(e)=>updatefilterData(e)}
+                        value={filterData.min_price || ""}
+                        name='min_price'
+                        />
                     </li>
                     <li>
-                      <input type="text" placeholder="$ Max" />
+                      <input type="text" placeholder="$ Max" 
+                        onChange={(e)=>updatefilterData(e)}
+                        value={filterData.max_price || ""}
+                        name='max_price'
+                        />
                     </li>
                   </ul>
                 </div>
@@ -296,13 +318,21 @@ const ListingFilter = ({seller}) => {
                       <ul>
                         <li>
                           <label>
-                            <input type="radio" name="default" />
+                            <input type="radio" name="variants" 
+                            checked={filterData.variants == "single"?true:false}
+                              value={"single"}
+                             onChange={(e)=>updatefilterData(e)}
+                             />
                             Single listing
                           </label>
                         </li>
                         <li>
                           <label>
-                            <input type="radio" name="default" />
+                            <input type="radio" name="variants" 
+                              value={"multi"}
+                              checked={filterData.variants == "multi"?true:false}
+                              onChange={(e)=>updatefilterData(e)}
+                             />
                             Variants
                           </label>
                         </li>
@@ -313,10 +343,10 @@ const ListingFilter = ({seller}) => {
                 <div className="menu_tab">
                   <ul>
                     <li className="apply_button">
-                      <Link href="#">Apply</Link>
+                      <Link href="#" onClick={(e)=>submitFilter(e)}>Apply</Link>
                     </li>
                     <li className="apply_button">
-                      <Link href="#">Reset</Link>
+                      <Link href="#"  onClick={(e)=>resetFilter(e)}>Reset</Link>
                     </li>
                   </ul>
                 </div>

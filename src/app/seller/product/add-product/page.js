@@ -76,7 +76,7 @@ const page = ({params}) => {
 
         taxCode: "",
         taxRate: "",
-        fulfillmentBy: "Sellora",
+        fulfillmentBy: "Seller",
         shippingProvider: "Merchant",
         currency: "USD",
 

@@ -223,7 +223,10 @@ const productVariantSchema = new Schema({
     currency:String,
     taxCode:String,
     taxRate:String,
-    fulfillmentBy:String,
+    fulfillmentBy:{
+        type:String,
+        default:"Seller"
+    },
     shippingProvider:String,
     stock:{
         type:Number,

@@ -76,9 +76,36 @@ const Listing = ({productList, editVariant, refreshList, setRefreshList, copyVar
                 <td>
                   <div className="che">
                     <p>
+                     
                       <input type="checkbox" id={`active${key}`} name="" />
-                       
-                      {product.variants && product.variants?.listingStatus  ? (
+                       {(()=>{
+                        if(product.save_as_draft == "1"){
+                          return   (
+                            <label htmlFor={`active${key}`} className="text-danger active222">
+                                Draft
+                            </label>
+                          )
+                        }else if(product.variants && product.variants.isProcessing == "Processing"){
+                          return  <label htmlFor={`active${key}`} className="text-warning active222">
+                           Processing
+                        </label>
+
+                        }else if(product.variants && (product.variants?.listingStatus || product.variants?.listingStatus == 0)){
+                            return (
+                                <label htmlFor={`active${key}`} className="green active222">
+                                  {product.variants && product.variants.listingStatus == 1? "Published":''}  {/*Active*/}
+                                  {product.variants && product.variants.listingStatus == 0? "Unpublished":''} {/*Inactive*/}
+                                  {product.variants && product.variants.listingStatus == 2? "Draft":''}
+                                  {product.variants && product.variants.listingStatus == 3? "Archived":''}
+                                  {product.variants && product.variants.listingStatus == 4? "Deleted":''}
+                                </label>
+                              )
+                        }else {
+                          return<>sdcsd</>
+                        }
+
+                       })()}
+                      {/* {product.variants && product.variants?.listingStatus  ? (
                         <label htmlFor={`active${key}`} className="green active222">
                         {product.variants && product.variants.listingStatus == 1? "Active":''}
                         {product.variants && product.variants.listingStatus == 0? "Inactive":''}
@@ -90,7 +117,7 @@ const Listing = ({productList, editVariant, refreshList, setRefreshList, copyVar
                         <label htmlFor={`active${key}`} className="text-danger active222">
                           Draft  
                       </label>
-                      )}
+                      )} */}
                       
                     </p>
                     <div className="date_time">
@@ -172,16 +199,16 @@ const Listing = ({productList, editVariant, refreshList, setRefreshList, copyVar
                   )}
                  
                 </td>
-                <td className="text-center small-size">
+                {/* <td className="text-center small-size">
                   Total fees
                   <br />
                   $10
                   <br />
                   <span className="calculate">Calculate</span>
-                </td>
+                </td> */}
                 <th className="text-center small-size">{product.variants?product.variants.stock:''}</th>
-                <td className="text-center small-size">{product.variants?product.variants.fulfillmentBy:''}</td>
-                <td className="text-center small-size">Good</td>
+                <td className="text-center small-size">{product?product.fulfillmentBy:''}</td>
+                {/* <td className="text-center small-size">Good</td> */}
                 <td className="text-center small-size">
                 {product?.save_as_draft != 1 ? (
                   <Link href="#" className="edit"  onClick={(e)=>editVariant(e,product)}>

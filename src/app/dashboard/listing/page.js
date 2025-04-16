@@ -16,13 +16,13 @@ import HelpAndVideoTopSection from '@/app/seller/HelpAndVideoTop';
 const page = () => { 
 
   const ListingPage = ()=>{ 
-
+    const sanitize = (val) => typeof val === "string" ? val.replace(/\?/g, "") : val;
     
   const {globalData, setGlobalData} = useContext(AppContext)
   const queryParam = useSearchParams()
-  const pageSize = queryParam.get('size') || 10
-  const currentPage = queryParam.get('page') || 1
-  const type = queryParam.get('type') || "All"
+  const pageSize = sanitize(queryParam.get('size')) || 10
+  const currentPage = sanitize(queryParam.get('page')) || 1
+  const type = sanitize(queryParam.get('type')) || "All"
   const router = useRouter();
   const [productList, setProductList] = useState([])
   const [pagination, setPagination] = useState(null)
@@ -38,15 +38,18 @@ const page = () => {
     }
   ])
 
+ 
+ 
   const [filterData, setFilterData] = useState({
-    category:"",
-    brand:"",
-    condition:"",
-    listing_quantity:"",
-    min_price:0,
-    max_price:"",
-    variants:""
-  })
+        category: sanitize(queryParam.get("category")) || "",
+        brand: queryParam.getAll("brand") || [],
+        condition: sanitize(queryParam.get("condition")) || "",
+        listing_quantity: sanitize(queryParam.get("listing_quantity")) || "",
+        min_price: sanitize(queryParam.get("min_price")) || 0,
+        max_price: sanitize(queryParam.get("max_price")) || "",
+        variants: sanitize(queryParam.get("variants")) || "",
+      })
+
 
   function updateFilterData(e){
     const {name, value} = e.target
@@ -66,6 +69,33 @@ const page = () => {
   }
   useEffect(()=>{
     if(globalData.sellor){ 
+
+      const params = new URLSearchParams(); 
+      params.append("seller_id", globalData.sellor?._id);
+      params.append("page", currentPage || 1);
+      params.append("pageSize", pageSize || 10);
+      if(searchText.search){ 
+        params.append("searchText", searchText.search);
+        params.append("searchBy", searchText.searchBy); 
+      }
+
+      if(type){  
+        params.append("type", type);
+      }
+
+        for (const key in filterData) {
+          const value = filterData[key];
+          
+          if (Array.isArray(value) && value.length > 0) {
+            value.forEach((val) => params.append(key, val));
+          } else if (value !== "" && value !== null && value !== undefined) {
+            params.append(key, value);
+          }
+        }
+
+
+
+        
     $('.loaderouter').css('display',"flex") 
       fetch(`${baseUrl}api/seller/product/product-listing?seller_id=${globalData.sellor._id}&page=${currentPage}&pageSize=${pageSize}&type=${type}`,{
         method:"GET", 
@@ -97,8 +127,36 @@ const page = () => {
   },[searchText.search, searchText.searchBy])
 
   function searchProduct(){
-    if(globalData.sellor){ 
-          fetch(`${baseUrl}api/seller/product/product-listing?seller_id=${globalData.sellor?._id}&page=${currentPage}&pageSize=${pageSize}&searchText=${searchText.search}&searchBy=${searchText.searchBy}&type=${type}`,{
+    if(globalData.sellor){  
+      const params = new URLSearchParams(); 
+      params.append("seller_id", globalData.sellor?._id);
+      params.append("page", currentPage || 1);
+      params.append("pageSize", pageSize || 10);
+      if(searchText.search){ 
+        params.append("searchText", searchText.search);
+        params.append("searchBy", searchText.searchBy);
+        
+      }
+      if(type){  
+        params.append("type", type); 
+      }
+
+        for (const key in filterData) {
+          const value = filterData[key];
+          
+          if (Array.isArray(value) && value.length > 0) {
+            value.forEach((val) => params.append(key, val));
+          } else if (value !== "" && value !== null && value !== undefined) {
+            params.append(key, value); 
+          }
+        }
+
+       
+
+ 
+
+          // fetch(`${baseUrl}api/seller/product/product-listing?seller_id=${globalData.sellor?._id}&page=${currentPage}&pageSize=${pageSize}&searchText=${searchText.search}&searchBy=${searchText.searchBy}&type=${type}`,{
+          fetch(`${baseUrl}api/seller/product/product-listing?${params.toString()}`,{
               method:"GET", 
           }).then((response)=>{
               if(!response.ok){ 
@@ -118,12 +176,24 @@ const page = () => {
 
   function paginationFun(page, size, e){
     e.preventDefault();
-    let link = `${baseUrl}dashboard/listing?size=${size}&page=${page}`
+    const params = new URLSearchParams(); 
+    params.append("type", type);
+
+    for (const key in filterData) {
+      const value = filterData[key];
+      
+      if (Array.isArray(value) && value.length > 0) {
+        value.forEach((val) => params.append(key, val));
+      } else if (value !== "" && value !== null && value !== undefined) {
+        params.append(key, value);
+      }
+    }
+    let link = `${baseUrl}dashboard/listing?size=${size}&page=${page}&${params}`
     router.push(link); 
   }
   function changeListSize(e){
     const { name, value } = e.target
-    let link = `${baseUrl}dashboard/listing?size=${value}&page=${currentPage}`
+    let link = `${baseUrl}dashboard/listing?size=${value}&page=${1}`
     router.push(link);
     
   }
@@ -151,6 +221,46 @@ const page = () => {
   function closeVariantModal(){
     setOpenModel(false) 
   }
+
+
+  // filter function
+  function submitFilter(e){
+    e.preventDefault()
+    const params = new URLSearchParams(); 
+    params.append("type", type);
+
+    for (const key in filterData) {
+      const value = filterData[key];
+      
+      if (Array.isArray(value) && value.length > 0) {
+        value.forEach((val) => params.append(key, val));
+      } else if (value !== "" && value !== null && value !== undefined) {
+        params.append(key, value);
+      }
+    }
+    let link = `${baseUrl}dashboard/listing?&${params}`
+    router.push(link); 
+
+    // searchProduct()
+  }
+
+  // reset filter function
+  function resetFilter(e){
+    e.preventDefault()
+    setFilterData({
+      category:"",
+      brand:[],
+      condition:"",
+      listing_quantity:"",
+      min_price:0,
+      max_price:"",
+      variants:""
+    })
+    setTimeout(() => { 
+      searchProduct()
+    }, 200);
+  }
+
 
   return (
     <>
@@ -269,7 +379,13 @@ const page = () => {
                 </div>
               </th>
             </tr>
-            <ListingFilter seller={globalData.sellor}/>
+            <ListingFilter 
+            seller={globalData.sellor} 
+            resetFilter={resetFilter}
+            submitFilter={submitFilter} 
+            filterData={filterData}
+            setFilterData={setFilterData}
+            />
             <tr className="winner__table">
               <th width={110}>
                 <div className="che">
@@ -283,12 +399,12 @@ const page = () => {
               <th width={250}>SKU and SIN </th>
               <th width={150}>Variants</th>
               <th width={150}>Price</th>
-              <th>
+              {/* <th>
                 Estimated fees <span className="per_nuit">per unit sold</span>
-              </th>
+              </th> */}
               <th>Stock</th>
               <th>Fulfillment</th>
-              <th>Listing Quality</th>
+              {/* <th>Listing Quality</th> */}
               <th>Action</th>
               <th />
             </tr>

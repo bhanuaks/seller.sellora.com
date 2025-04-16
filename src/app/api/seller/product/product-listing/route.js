@@ -12,9 +12,19 @@ export async function GET(request) {
     const searchText = searchParams.get('searchText')
     const searchBy = searchParams.get('searchBy')
     const type = searchParams.get('type')
+
+    const categoryId = searchParams.get('category')
+    const brandIds = searchParams.getAll('brand')
+    
+    // const condition = searchParams.get('condition')
+    // const listing_quantity = searchParams.get('listing_quantity')
+    const min_price = searchParams.get('min_price') || 0
+    const max_price = searchParams.get('max_price') || 1000000
+    const variantsFilterType = searchParams.get('variants')
+
     let page = parseInt(searchParams.get('page')) || 1
     let pageSize = parseInt(searchParams.get('pageSize')) || 10
-    const requestData = {seller_id, searchText, searchBy, type, page, pageSize};
+    const requestData = {seller_id, searchText, searchBy, type, page, pageSize, categoryId, brandIds, min_price, max_price, variantsFilterType};
     if(type == "Unpublished"){
         return  await unpublishedProduct(requestData);
     }else if(type == "Published"){
@@ -22,6 +32,9 @@ export async function GET(request) {
     }
     else if(type == "Drafts"){
         return  await DraftProduct(requestData);
+    } 
+    else if(type == "Processing"){
+        return  await ProcessingProduct(requestData);
     } 
     
     const totalData = await countTotalProduct(requestData);
@@ -34,101 +47,125 @@ export async function GET(request) {
     }
  
     const skip = (page - 1) * pageSize;
-    let totalCount =null;
+     
     try{
-            
-       
+             
         const matchCondition = {
             seller_id: new mongoose.Types.ObjectId(seller_id),
             save_as_draft: { $ne: "1" }
         };
+
+        if (categoryId) {
+            matchCondition.category_id = new mongoose.Types.ObjectId(categoryId);
+          }
+
+          if (brandIds && brandIds.length > 0) {
+            const mongBrandId = brandIds
+              .filter(id => mongoose.Types.ObjectId.isValid(id))  
+              .map(id => new mongoose.Types.ObjectId(id));         
+          
+            if (mongBrandId.length > 0) {
+              matchCondition.brand_id = { $in: mongBrandId };
+            }
+          }
+          
         
         
         if (searchText && typeof searchText === 'string' && searchBy=="title") {
             matchCondition.product_name = { $regex: searchText, $options: "i" };
         }
 
-        totalCount = await productVariantModel.countDocuments({
-            $and:[
-                {seller_id: new mongoose.Types.ObjectId(seller_id)},
-                { listingStatus: {$nin: [3, 4]} }
-            ]
-        });
-         
-        const productListing = await productModel.aggregate([
-            {
-                $match:matchCondition,
-            },
-
-            {
-                $lookup:{
-                    from:"productvariants",
-                    let: {productId:"$_id"},
-                    pipeline:[
-                        {
-                            $match:{
-                                $expr:{
-                                    $and:[
-                                        { $eq: ["$product_id", "$$productId"] },
-                                        { $not: [{ $in: ["$listingStatus", [3, 4]] }] }
-                                    ]
-                                }
-                            }
-                        },
-                        // Search `sku` inside productvariants
-                        ...(searchText && typeof searchText === "string" && searchBy === "SKU"
-                            ? [
-                                {
-                                    $match: {
-                                        sku: { $regex: searchText, $options: "i" }  
-                                    }
-                                }
-                            ]
-                            : [])
-
-                    ],
-                    
-                    as:"variants"
-                }
-            },
-            {
-                $unwind:{
-                    path: "$variants",
-                    preserveNullAndEmptyArrays:searchBy === "SKU" && searchText ?false:true
-                }
-            },
-            {
-                $lookup:{
-                    from:"variantthresholds",
-                    localField:"variants._id",
-                    foreignField:"variant_id",
-                    as:"tresholdData"
-                }
-            }, 
-            {
-                $sort: { createdAt: -1 }
-            },
-
-            {
-                $skip: skip
-            },
-            {
-                $limit: pageSize
-            }
-           
-            
-    ]) 
        
+
+       
+         
+        const productListingResult = await productModel.aggregate([
+            {
+              $match: matchCondition
+            },
+            {
+              $lookup: {
+                from: "productvariants",
+                let: { productId: "$_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$product_id", "$$productId"] },
+                          { $not: [{ $in: ["$listingStatus", [3, 4]] }] },
+                          ...(min_price ? [{ $gte: ["$consumerSalePrice", parseFloat(min_price)] }] : []),
+                          ...(max_price ? [{ $lte: ["$consumerSalePrice", parseFloat(max_price)] }] : []),
+                        ],
+                      },
+                    },
+                  },
+                  ...(searchText && typeof searchText === "string" && searchBy === "SKU"
+                    ? [
+                        {
+                          $match: {
+                            sku: { $regex: searchText, $options: "i" },
+                          },
+                        },
+                      ]
+                    : []),
+                ],
+                as: "variants",
+              },
+            },
+            {
+              $addFields: {
+                variantCount: { $size: "$variants" },
+              },
+            },
+            ...(variantsFilterType === "multi"
+              ? [{ $match: { variantCount: { $gte: 2 } } }]
+              : []),
+            ...(variantsFilterType === "single"
+              ? [{ $match: { variantCount: 1 } }]
+              : []),
+          
+            {
+              $facet: {
+                totalRecored: [
+                  { $count: "count" }
+                ],
+                data: [
+                  {
+                    $unwind: {
+                      path: "$variants",
+                      preserveNullAndEmptyArrays: searchBy === "SKU" && searchText ? false : false,
+                    },
+                  },
+                  {
+                    $lookup: {
+                      from: "variantthresholds",
+                      localField: "variants._id",
+                      foreignField: "variant_id",
+                      as: "tresholdData",
+                    },
+                  },
+                  { $sort: { createdAt: -1 } },
+                  { $skip: skip },
+                  { $limit: pageSize }
+                ]
+              }
+            }
+          ]);
+          
+          // Destructure the result
+          const [{ totalRecored, data }] = productListingResult;
+          const total = totalRecored[0]?.count || 0; 
+
     let pagination= {
-        totalCount,
+        totalCount:total,
         page,
-        pageSize,
-        // totalPages: 20,
-        totalPages: Math.ceil(totalCount / pageSize),
+        pageSize, 
+        totalPages: Math.ceil(total / pageSize),
     };
     
         return responseFun(true, {
-            list:productListing, 
+            list:data, 
             pagination:pagination,
             totalData:totalData
         },200)
@@ -141,11 +178,10 @@ export async function GET(request) {
 
 async function unpublishedProduct(requestData) {
     const totalData = await countTotalProduct(requestData)
-    const {seller_id, searchText, searchBy, type, page, pageSize} = requestData;
+    const {seller_id, searchText, searchBy, type, page, pageSize, categoryId, brandIds, min_price, max_price, variantsFilterType} = requestData;
 
     const skip = (page - 1) * pageSize;
-    let totalCount =null;
-
+   
     try{
             
         const query = {
@@ -155,91 +191,124 @@ async function unpublishedProduct(requestData) {
         const matchCondition = {
             seller_id: new mongoose.Types.ObjectId(seller_id)
         };
+
+
+        if (categoryId) {
+            matchCondition.category_id = new mongoose.Types.ObjectId(categoryId);
+          }
+
+          if (brandIds && brandIds.length > 0) {
+            const mongBrandId = brandIds
+              .filter(id => mongoose.Types.ObjectId.isValid(id))  
+              .map(id => new mongoose.Types.ObjectId(id));         
+          
+            if (mongBrandId.length > 0) {
+              matchCondition.brand_id = { $in: mongBrandId };
+            }
+          }
+
         
         
         if (searchText && typeof searchText === 'string' && searchBy=="title") {
             matchCondition.product_name = { $regex: searchText, $options: "i" };
         }
 
-        totalCount = totalData?.unpublished || 0;
+       
          
         const productListing = await productModel.aggregate([
+            { $match: matchCondition },
+          
             {
-                $match:matchCondition,
-            },
-
-            {
-                $lookup:{
-                    from:"productvariants",
-                    let: {productId:"$_id"},
-                    pipeline:[
+              $lookup: {
+                from: "productvariants",
+                let: { productId: "$_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$product_id", "$$productId"] },
+                          { $eq: ["$listingStatus", 0] },
+                          { $eq: ["$isProcessing", "Approved"] },
+                          ...(min_price ? [{ $gte: ["$consumerSalePrice", parseFloat(min_price)] }] : []),
+                          ...(max_price ? [{ $lte: ["$consumerSalePrice", parseFloat(max_price)] }] : []),
+                        ],
+                      },
+                    },
+                  },
+                  ...(searchText && typeof searchText === "string" && searchBy === "SKU"
+                    ? [
                         {
-                            $match:{
-                                $expr:{
-                                    $and:[
-                                        { $eq: ["$product_id", "$$productId"] },
-                                        { $eq: ["$listingStatus", 0] },
-                                        { $eq: ["$isProcessing", "Approved"] }, 
-                                    ]
-                                }
-                            }
+                          $match: {
+                            sku: { $regex: searchText, $options: "i" },
+                          },
                         },
-                        // Search `sku` inside productvariants
-                        ...(searchText && typeof searchText === "string" && searchBy === "SKU"
-                            ? [
-                                {
-                                    $match: {
-                                        sku: { $regex: searchText, $options: "i" }  
-                                    }
-                                }
-                            ]
-                            : [])
+                      ]
+                    : []),
+                ],
+                as: "variants",
+              },
+            },
 
-                    ],
-                    
-                    as:"variants"
+            {
+                $addFields: {
+                  variantCount: { $size: "$variants" },
+                },
+              },
+              ...(variantsFilterType === "multi"
+                ? [{ $match: { variantCount: { $gte: 2 } } }]
+                : []),
+              ...(variantsFilterType === "single"
+                ? [{ $match: { variantCount: 1 } }]
+                : []),
+
+          
+            // 🚨 Only keep products that have at least one variant
+            {
+              $match: {
+                variants: { $ne: [] }
+              }
+            },
+          
+            {
+                $facet: {
+                  totalRecords: [
+                    { $unwind: "$variants" },
+                    { $count: "count" }
+                  ],
+                  data: [
+                    { $unwind: "$variants" },
+                    {
+                      $lookup: {
+                        from: "variantthresholds",
+                        localField: "variants._id",
+                        foreignField: "variant_id",
+                        as: "tresholdData",
+                      },
+                    },
+                    { $sort: { createdAt: -1 } },
+                    { $skip: skip },
+                    { $limit: pageSize },
+                  ]
                 }
-            },
-            {
-                $unwind:{
-                    path: "$variants",
-                    preserveNullAndEmptyArrays:false
-                }
-            },
-            {
-                $lookup:{
-                    from:"variantthresholds",
-                    localField:"variants._id",
-                    foreignField:"variant_id",
-                    as:"tresholdData"
-                }
-            },
-            {
-                $sort:{
-                    createdAt:-1
-                }
-            },
-            {
-                $skip: skip
-            },
-            {
-                $limit: pageSize
-            },
-            
-            
-            
-    ]) 
+              }
+          ]);
        
+
+     // Destructure the result
+     const [{ totalRecords, data }] = productListing;
+        const total = totalRecords[0]?.count || 0;
+        
     let pagination= {
-        totalCount,
+        totalCount:total,
         page,
         pageSize,
         // totalPages: 20,
-        totalPages: Math.ceil(totalCount / pageSize),
+        totalPages: Math.ceil(total / pageSize),
     };
     
         return responseFun(true, {
-            list:productListing, 
+            list:data, 
             pagination:pagination,
             totalData:totalData
         },200)
@@ -255,14 +324,14 @@ async function unpublishedProduct(requestData) {
 async function publishedProduct(requestData) {
     
     const totalData = await countTotalProduct(requestData);
-    const {seller_id, searchText, searchBy, page, pageSize} = requestData;
+    const {seller_id, searchText, searchBy, page, pageSize,  categoryId, brandIds, min_price, max_price, variantsFilterType} = requestData;
 
     const skip = (page - 1) * pageSize;
     let totalCount =null;
 
     try{
             
-      
+       
 
         const matchCondition = {
             seller_id: new mongoose.Types.ObjectId(seller_id),
@@ -270,6 +339,20 @@ async function publishedProduct(requestData) {
         };
         
         
+        if (categoryId) {
+            matchCondition.category_id = new mongoose.Types.ObjectId(categoryId);
+          }
+
+          if (brandIds && brandIds.length > 0) {
+            const mongBrandId = brandIds
+              .filter(id => mongoose.Types.ObjectId.isValid(id))  
+              .map(id => new mongoose.Types.ObjectId(id));         
+          
+            if (mongBrandId.length > 0) {
+              matchCondition.brand_id = { $in: mongBrandId };
+            }
+          }
+
         if (searchText && typeof searchText === 'string' && searchBy=="title") {
             matchCondition.product_name = { $regex: searchText, $options: "i" };
         }
@@ -299,6 +382,8 @@ async function publishedProduct(requestData) {
                                         { $eq: ["$product_id", "$$productId"] },
                                         { $eq: ["$listingStatus", 1] },
                                         { $eq: ["$isProcessing", "Approved"] }, 
+                                        ...(min_price ? [{ $gte: ["$consumerSalePrice", parseFloat(min_price)] }] : []),
+                                        ...(max_price ? [{ $lte: ["$consumerSalePrice", parseFloat(max_price)] }] : []),
                                     ]
                                 }
                             }
@@ -314,53 +399,66 @@ async function publishedProduct(requestData) {
                             ]
                             : [])
 
-                    ],
-                    
+                    ], 
                     as:"variants"
-                }
-            },
-            {
-                $unwind:{
-                    path: "$variants",
-                    preserveNullAndEmptyArrays:false
-                }
-            },
-            {
-                $lookup:{
-                    from:"variantthresholds",
-                    localField:"variants._id",
-                    foreignField:"variant_id",
-                    as:"tresholdData"
-                }
-            },
-            {
-                $sort:{
-                    createdAt:-1
                 }
             },
 
             {
-                $skip: skip
-            },
+                $addFields: {
+                  variantCount: { $size: "$variants" },
+                },
+              },
+              ...(variantsFilterType === "multi"
+                ? [{ $match: { variantCount: { $gte: 2 } } }]
+                : []),
+              ...(variantsFilterType === "single"
+                ? [{ $match: { variantCount: 1 } }]
+                : []),
+
+
+
             {
-                $limit: pageSize
-            }
-           
+                $facet: {
+                  totalRecords: [
+                    { $unwind: "$variants" },
+                    { $count: "count" }
+                  ],
+                  data: [
+                    { $unwind: "$variants" },
+                    {
+                      $lookup: {
+                        from: "variantthresholds",
+                        localField: "variants._id",
+                        foreignField: "variant_id",
+                        as: "tresholdData",
+                      },
+                    },
+                    { $sort: { createdAt: -1 } },
+                    { $skip: skip },
+                    { $limit: pageSize },
+                  ]
+                }
+              }
             
     ]) 
        
+    // Destructure the result
+    const [{ totalRecords, data }] = productListing;
+    const total = totalRecords[0]?.count || 0;
+    
     let pagination= {
-        totalCount,
+        totalCount:total,
         page,
         pageSize,
         // totalPages: 20,
-        totalPages: Math.ceil(totalCount / pageSize),
+        totalPages: Math.ceil(total / pageSize),
     };
-    
+
         return responseFun(true, {
-            list:productListing, 
+            list:data, 
             pagination:pagination,
-            totalData:totalData, 
+            totalData:totalData
         },200)
 
     }catch(error){
@@ -375,7 +473,7 @@ async function publishedProduct(requestData) {
 
 async function DraftProduct(requestData) {
     const totalData = await countTotalProduct(requestData)
-    const {seller_id, searchText, searchBy, page, pageSize} = requestData;
+    const {seller_id, searchText, searchBy, page, pageSize, categoryId, brandIds, min_price, max_price, variantsFilterType} = requestData;
 
     const skip = (page - 1) * pageSize;
     let totalCount =null;
@@ -389,6 +487,20 @@ async function DraftProduct(requestData) {
             save_as_draft:"1"
         };
         
+
+        if (categoryId) {
+            matchCondition.category_id = new mongoose.Types.ObjectId(categoryId);
+          }
+
+          if (brandIds && brandIds.length > 0) {
+            const mongBrandId = brandIds
+              .filter(id => mongoose.Types.ObjectId.isValid(id))  
+              .map(id => new mongoose.Types.ObjectId(id));         
+          
+            if (mongBrandId.length > 0) {
+              matchCondition.brand_id = { $in: mongBrandId };
+            }
+          }
         
         if (searchText && typeof searchText === 'string' && searchBy=="title") {
             matchCondition.product_name = { $regex: searchText, $options: "i" };
@@ -410,7 +522,9 @@ async function DraftProduct(requestData) {
                                 $expr:{
                                     $and:[
                                         { $eq: ["$product_id", "$$productId"] },
-                                        { $not: [{ $in: ["$listingStatus", [3, 4]] }] }
+                                        { $not: [{ $in: ["$listingStatus", [3, 4]] }] },
+                                        ...(min_price ? [{ $gte: ["$consumerSalePrice", parseFloat(min_price)] }] : []),
+                                        ...(max_price ? [{ $lte: ["$consumerSalePrice", parseFloat(max_price)] }] : []),
                                     ]
                                 }
                             }
@@ -548,6 +662,12 @@ async function countTotalProduct(requestData){
     //         }
     //     }
     // ]);
+
+
+
+
+
+
                 
     const totalDraftCount =  await productModel.countDocuments(matchCondition)
     
@@ -608,6 +728,149 @@ async function countTotalProduct(requestData){
     return totalData
 
 }
+
+
+
+    
+async function ProcessingProduct(requestData) {
+    
+    const totalData = await countTotalProduct(requestData);
+    const {seller_id, searchText, searchBy, page, pageSize, categoryId, brandIds, min_price, max_price, variantsFilterType} = requestData;
+
+    const skip = (page - 1) * pageSize;
+    let totalCount =null;
+
+    try{
+             
+        const matchCondition = {
+            seller_id: new mongoose.Types.ObjectId(seller_id),
+            save_as_draft: { $ne: "1" },
+        };
+         
+        if (categoryId) {
+            matchCondition.category_id = new mongoose.Types.ObjectId(categoryId);
+          }
+
+          if (brandIds && brandIds.length > 0) {
+            const mongBrandId = brandIds
+              .filter(id => mongoose.Types.ObjectId.isValid(id))  
+              .map(id => new mongoose.Types.ObjectId(id));         
+          
+            if (mongBrandId.length > 0) {
+              matchCondition.brand_id = { $in: mongBrandId };
+            }
+          }
+
+
+        if (searchText && typeof searchText === 'string' && searchBy=="title") {
+            matchCondition.product_name = { $regex: searchText, $options: "i" };
+        }
+
+        totalCount = totalData?.published || 0;
+        
+         
+        const productListing = await productModel.aggregate([
+            {
+                $match:matchCondition,
+            },
+
+            {
+                $lookup:{
+                    from:"productvariants",
+                    let: {productId:"$_id"},
+                    pipeline:[
+                        {
+                            $match:{
+                                $expr:{
+                                    $and:[
+                                        { $eq: ["$product_id", "$$productId"] },
+                                        { $eq: ["$listingStatus", 1] },
+                                        { $eq: ["$isProcessing", "Processing"] }, 
+                                        ...(min_price ? [{ $gte: ["$consumerSalePrice", parseFloat(min_price)] }] : []),
+                                        ...(max_price ? [{ $lte: ["$consumerSalePrice", parseFloat(max_price)] }] : []),
+                                    ]
+                                }
+                            }
+                        },
+                        // Search `sku` inside productvariants
+                        ...(searchText && typeof searchText === "string" && searchBy === "SKU"
+                            ? [
+                                {
+                                    $match: {
+                                        sku: { $regex: searchText, $options: "i" }  
+                                    }
+                                }
+                            ]
+                            : [])
+
+                    ],
+                    
+                    as:"variants"
+                }
+            },
+
+            {
+                $addFields: {
+                  variantCount: { $size: "$variants" },
+                },
+              },
+              ...(variantsFilterType === "multi"
+                ? [{ $match: { variantCount: { $gte: 2 } } }]
+                : []),
+              ...(variantsFilterType === "single"
+                ? [{ $match: { variantCount: 1 } }]
+                : []),
+
+
+             {
+                $facet: {
+                  totalRecords: [
+                    { $unwind: "$variants" },
+                    { $count: "count" }
+                  ],
+                  data: [
+                    { $unwind: "$variants" },
+                    {
+                      $lookup: {
+                        from: "variantthresholds",
+                        localField: "variants._id",
+                        foreignField: "variant_id",
+                        as: "tresholdData",
+                      },
+                    },
+                    { $sort: { createdAt: -1 } },
+                    { $skip: skip },
+                    { $limit: pageSize },
+                  ]
+                }
+              }
+            
+    ]) 
+    // Destructure the result
+    const [{ totalRecords, data }] = productListing;
+    const total = totalRecords[0]?.count || 0;
+    
+    let pagination= {
+        totalCount:total,
+        page,
+        pageSize,
+        // totalPages: 20,
+        totalPages: Math.ceil(total / pageSize),
+    };
+
+        return responseFun(true, {
+            list:data, 
+            pagination:pagination,
+            totalData:totalData
+        },200)
+
+    }catch(error){
+        console.log(error);
+        return responseFun(false, {error:error},200)
+    }
+    
+}
+
 
 
 export async function POST(request) {
