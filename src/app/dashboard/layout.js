@@ -10,17 +10,17 @@ import { baseUrl } from "@/Http/helper";
 import { useEffect } from "react";
 import SellerDashboardFooter from "./sd_components/SellerDashboardFooter";
 
-// import '../../../public/front/assets/css/charts.min.css'
-// import '../../../public/front/assets/css/plugins.css'
-// import '../../../public/front/assets/css/style.css'
+import '../../../public/front/assets/css/charts.min.css'
+import '../../../public/front/assets/css/plugins.css'
+import '../../../public/front/assets/css/style.css'
  
   
   export default function SellorDashboardRootLayout({ children }) {
       const pathname =  usePathname();
           useEffect(()=>{
             $('.logoLoader').css('display', 'none')
-          },[pathname])
-
+          },[pathname]) 
+          
     return (
       <html lang="en">
         <head>
@@ -31,9 +31,9 @@ import SellerDashboardFooter from "./sd_components/SellerDashboardFooter";
           <title>My Listing | Sellora</title>
           {/* plugins css */}
           <link rel="shortcut icon" href="/front/favicon.ico" type="image/x-icon" />
-          <link rel="stylesheet preload" href="/front/assets/css/plugins.css" as="style" />
+          {/* <link rel="stylesheet preload" href="/front/assets/css/plugins.css" as="style" />
           <link rel="stylesheet preload" href="/front/assets/css/style.css" as="style" />
-          <link rel="stylesheet" href="/front/assets/css/charts.min.css" />
+          <link rel="stylesheet" href="/front/assets/css/charts.min.css" /> */}
         </head>
       <body className="index-five">
 

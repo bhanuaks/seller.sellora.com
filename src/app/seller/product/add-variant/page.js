@@ -49,6 +49,7 @@ const page = ({ params }) => {
     const [childcategory, setChildcategory] = useState(null);
     const [brand, setBrand] = useState(null);
     const searchParams = useSearchParams();
+    const [selectedVariants, setSelectedVariants] = useState([]);
 
     const category_id = searchParams.get("category");
     const subcategory_id = searchParams.get("subCategory");
@@ -62,7 +63,7 @@ const page = ({ params }) => {
     const [image, setImage] = useState([]);
     const [imagePath, setImagePath] = useState([]);
     const formRef = useRef();
-
+    const [showWishlistMessage, setShowWishlistMessage] = useState(false);
     const [currentSection, setCurrentSection] = useState("Variant");
 
     const [variants, setVariants] = useState([]);
@@ -144,6 +145,7 @@ const page = ({ params }) => {
 
     const handleInputChangeDynamicValue = (e) => {
       const { value, name } = e.target;
+      console.log({value});
       setVariantData((prevVariants) => ({
         ...prevVariants,
         customAttributes: {
@@ -157,18 +159,23 @@ const page = ({ params }) => {
       if (action == "next") {
         router.push(
           `${baseUrl}seller/product/compliance-and-key-attributes?${searchParams}`
-        );
-        // setCurrentSection("Threshold")
+        ); 
         return;
       }
+      const filterVariantData = Object.fromEntries(
+        Object.entries(variantData.customAttributes).filter(([key, value]) => key && value)
+      );
       const bodyData = createFormData({
         ...variantData,
         threshold: thresholdData,
         variant: productDetails?.variant,
         seller_id: globalData?.sellor._id,
+        customAttributes:filterVariantData
       });
-      const dynamicVariant = variantData.customAttributes
-        ? Object.keys(variantData.customAttributes)
+
+
+      const dynamicVariant = filterVariantData
+        ? Object.keys(filterVariantData)
         : [];
       if (
         dynamicVariant.length == 0 &&
@@ -252,7 +259,7 @@ const page = ({ params }) => {
             });
             setImagePath([]);
             setImage([]);
-            setShowImage(false);
+            setShowImage(false); 
             if (action == "save_and_next") {
               router.push(
                 `${baseUrl}seller/product/compliance-and-key-attributes?${searchParams}`
@@ -386,7 +393,10 @@ const page = ({ params }) => {
         category_id: category_id,
       });
       setThresholdData(variantParam.threshold);
-      // console.log(variantParam);
+      if(variantParam.customAttributes){ 
+        // select already exist variation in product varionat
+        setSelectedVariants(Object.keys(variantParam.customAttributes))
+      }
       const imgPath = [];
       const allImage = [];
       if (variantParam.image_1) {
@@ -459,6 +469,34 @@ const page = ({ params }) => {
       setThresholdData(updatedthresholdData);
     }
 
+    const handleVariantChange = (e) => {
+      const value = e.target.value;
+      if (e.target.checked) {
+        if(selectedVariants.length < 2){ 
+          setSelectedVariants(prev => [...prev, value]);
+        }else{
+          setShowWishlistMessage(true)
+        }
+      } else {
+        setSelectedVariants(prev => prev.filter(v => v !== value));
+
+        setVariantData((prevVariants) => ({
+          ...prevVariants,
+          customAttributes: {
+            ...prevVariants.customAttributes,
+            [value]: null,
+          },
+        }));
+
+      }
+      
+      
+    };
+
+    const closeOverlay = () => {
+      setShowWishlistMessage(false); 
+    };
+
     return (
       <>
         <div className="add-product-streep text-center">
@@ -480,6 +518,24 @@ const page = ({ params }) => {
           </div>
           {/* loader end */}
 
+
+            {/* Overlay Background */}
+            {(showWishlistMessage) && (
+                    <div
+                      id="anywhere-home"
+                      className="anywere bgshow"
+                      onClick={closeOverlay}
+                    ></div>
+                  )}
+
+                {showWishlistMessage && (
+                    <div className="successfully-addedin-wishlist" style={{display:"flex"}}>
+                      <div className="d-flex" style={{ alignItems: 'center', gap: '15px' }}>
+                        {/* <i className="fa-regular fa-check"></i> */}
+                        <p>You can select a maximum of two variations.</p>
+                      </div>
+                    </div>
+                  )}
           <div className="container">
             <div className="row">
               <div className="col-lg-12">
@@ -623,10 +679,39 @@ const page = ({ params }) => {
                                       </div>
                                     )}
 
+
+                                          {productDetails &&
+                                            variants.length > 0 &&
+                                            productDetails.variant === "Yes" && (
+                                              <div className="col-3">
+                                                <label htmlFor="sku">
+                                                  Choose Variant
+                                                  <span></span>
+                                                </label>
+                                                <div style={{ maxHeight: "150px", overflowY: "auto", border: "1px solid #ccc", padding: "10px" }}>
+                                                  {variants.map((variantItem, index) => (
+                                                    <div key={index}>
+                                                      <label>
+                                                        <input
+                                                          type="checkbox"
+                                                          value={variantItem[0]}
+                                                          checked={selectedVariants.includes(variantItem[0])}
+                                                          onChange={(e) =>handleVariantChange(e)}
+                                                        />
+                                                        {' '}{variantItem[0]}
+                                                      </label>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </div>
+                                          )}
+
+
                                     {productDetails &&
                                     variants.length &&
                                     productDetails.variant == "Yes"
                                       ? variants.map((variantItem, index) => (
+                                        selectedVariants.includes(variantItem[0]) &&
                                           <div className="col-3" key={index}>
                                             <label htmlFor="sku">
                                               {variantItem[0]}

@@ -608,7 +608,7 @@ const page = ({params}) => {
                                                 <div className="row align-items-center">
                                                     <div className="col-lg-4">
                                                         <label htmlFor="listing-status">
-                                                            Target Gender<span>*</span>
+                                                            Target Gender<span></span>
                                                             {/* <i
                                                                 className="fa fa-info color_bg"
                                                                 aria-hidden="true"
@@ -622,8 +622,7 @@ const page = ({params}) => {
                                                             value={productDetails.target_gender || ""}
                                                             onChange={(e)=>changeProductInfoInput(e)}
                                                         >
-                                                            <option value="">Select</option>
-                                                           
+                                                            <option value="">Select</option> 
                                                             <option value="Male">Male</option>
                                                             <option value="Female">Female</option>
                                                             <option value="Other">Unisex</option>

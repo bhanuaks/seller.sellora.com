@@ -36040,7 +36040,7 @@ color:#c6c6c6;
   color: #fff;
 }
 .section_1 {
-  background: url(../../sellora-affiliate-program/images/banner_1.jpg) center no-repeat;
+  /* background: url(../../sellora-affiliate-program/images/banner_1.jpg) center no-repeat; */
   background-size: cover;
   padding: 70px 0px;
 }
@@ -37820,7 +37820,7 @@ ul.footer-nav li a:hover {
   transform: translateY(-50%);
   width: 0;
   height: 0;
-  background: url(../images/arrow-down-sign-to-navigate.png);
+  /* background: url(../images/arrow-down-sign-to-navigate.png); */
   background-size: 10px;
   width: 16px;
   height: 16px;
@@ -37919,7 +37919,7 @@ ul.footer-nav li a:hover {
   content: '';
   width: 11px;
   height: 11px;
-  background: url(../images/star2.png);
+  /* background: url(../images/star2.png); */
   filter: invert(5);
   background-repeat: no-repeat;
   background-size: contain;

@@ -183,7 +183,7 @@ export async function POST(request) {
     if (isEmpty(product_name)) errors.product_name = "This field is required";
     if (isEmpty(product_description)) errors.product_description = "This field is required";
     if (isEmpty(search_keywords)) errors.search_keywords = "This field is required";
-    if (isEmpty(target_gender)) errors.target_gender = "This field is required";
+    // if (isEmpty(target_gender)) errors.target_gender = "This field is required";
 
     // if (isEmpty(taxCode)) errors.taxCode = `Tax Code is required.`;
     // if (isEmpty(taxRate)) errors.taxRate = `Tax Rate is required.`;

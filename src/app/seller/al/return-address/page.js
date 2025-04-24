@@ -33,7 +33,7 @@ const page = () => {
       city:'',
       state:'',
       zip_code:'',
-      country:'',
+      country:'United States',
     })
     
   

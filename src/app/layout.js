@@ -8,8 +8,8 @@ import SellorFooter from "./seller/sellorcomponents/SellorFooter";
 import { useEffect } from "react";
 import { AppProvider } from "./contaxtData/contextData";
 import SellorDashboardCss from "./dashboard/SellorDashboardCss";
-// import '../../public/front/assets/css/style.css'
-// import '../../public/front/assets/css/plugins.css'
+import '../../public/front/assets/css/plugins.css'
+import '../../public/front/assets/css/style.css'
 
  
 
@@ -47,16 +47,16 @@ export default function SellorRootLayout({ children }) {
           href="/front/favicon.ico"
           type="image/x-icon"
         />
-        <link
+        {/* <link
           rel="stylesheet preload"
           href="/front/assets/css/plugins.css"
           as="style"
-        />
-        <link
+        /> */}
+        {/* <link
           rel="stylesheet preload"
           href="/front/assets/css/style.css"
           as="style"
-        />
+        /> */}
       </head>
 
       <body className="index-five">

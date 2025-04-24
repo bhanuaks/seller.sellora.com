@@ -204,7 +204,7 @@ const page = ({params}) => {
               <td className="text-center small-size">
               {brand.status==1 && (
                 <>
-                <div className="reapply"><Link href={`${baseUrl}add-catalog`}>Add Products</Link></div>
+                <div className="reapply"><Link href={`${baseUrl}dashboard/add-catalog?ref=single`}>Add Products</Link></div>
                 </>
               )}
                {brand.status==0 && (

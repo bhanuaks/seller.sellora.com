@@ -45,7 +45,7 @@ function page() {
     beneficiary_city: "",
     beneficiary_state: "",
     beneficiary_zip_code: "",
-    beneficiary_country: "",
+    beneficiary_country: "United States",
     proof_of_address: "",
     proof_of_address_file: "",
   });

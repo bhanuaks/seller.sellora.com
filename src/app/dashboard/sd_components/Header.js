@@ -755,21 +755,7 @@ const Header = () => {
             </nav>
           </div>
         </div>
-        {/*  <div class="tab-pane fade" id="nav-profile" role="tabpanel" aria-labelledby="nav-profile-tab" tabindex="0">
-  <div class="category-btn category-hover-header menu-category">
-    <ul class="category-sub-menu" id="category-active-menu">
-      <li> <Link href="#" class="menu-item">
-        
-        <span>Demo </span> <i class="fa-regular fa-plus"></i> </Link>
-        <ul class="submenu mm-collapse">
-          <li><Link class="mobile-menu-link" href="#">Demo 1</Link></li>
-        </ul>
-      </li>
-      <li><Link href="#" class="menu-item"><span>Demo </span></Link></li>
-      <li><Link href="#" class="menu-item"><span>Demo </span></Link></li>
-    </ul>  
-  </div>
-</div> */}
+      
       </div>
     </div>
   </div>
